@@ -1,4 +1,5 @@
 import { useAuthStore } from "@/store/authStore";
+import { delay } from "@/utils/delay"
 
 /**
  * fetch 옵션 + 인증 여부 옵션
@@ -7,6 +8,7 @@ import { useAuthStore } from "@/store/authStore";
  */
 type ApiOptions = RequestInit & {
   auth?: boolean;
+  delayMs?: number;
 };
 
 /**
@@ -18,11 +20,18 @@ type ApiOptions = RequestInit & {
  * 3. accessToken 만료 시 refresh 시도
  * 4. refresh 실패 or 인증 에러면 세션 종료
  */
-export async function apiClient(
+export async function apiClient<T = unknown>(
   url: string,
   options: ApiOptions = {}
-) {
-  const { auth = false, ...fetchOptions } = options;
+): Promise<T> {
+
+  const { auth = false, delayMs = 0, ...fetchOptions } = options;
+
+  // ✅ delay 적용
+  if (delayMs > 0) {
+    await delay(delayMs);
+  }
+
 
   /**
    * Zustand 스토어에서 현재 인증 상태 조회
@@ -48,8 +57,9 @@ if (auth && !token) {
   /**
    * headers 구성
    */
+  const isFormData = options.body instanceof FormData;
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+		...(isFormData ? {} : { "Content-Type": "application/json" }), // ✅ FormData일 땐 제거
     ...(fetchOptions.headers as Record<string, string> || {}),
   };
 

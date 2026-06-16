@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import Header from "@/components/Header";
+// import Header from "@/components/Header";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 
@@ -26,7 +26,7 @@ export default function MainLayout({
 
   return (
     <>
-      <Header />
+      {/* <Header /> */}
       <main>{children}</main>
     </>
   );
