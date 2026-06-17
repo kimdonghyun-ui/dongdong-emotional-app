@@ -15,14 +15,19 @@ export default function MainLayout({
   const accessToken = useAuthStore((s) => s.accessToken); // 로그인 여부 판단용 토큰
 
   useEffect(() => {
-    // ❌ 로그인 안 된 상태면
+    const isAuthPage =
+      pathname === "/login" ||
+      pathname === "/signup";
+
+    if (isAuthPage) return;
+
     if (!accessToken) {
-      // 로그인 페이지로 이동 + 원래 가려던 경로를 redirect로 전달
       router.replace(
         `/login?redirect=${encodeURIComponent(pathname)}`
       );
     }
   }, [accessToken, router, pathname]);
+
 
   return (
     <>
