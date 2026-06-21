@@ -111,8 +111,8 @@ export default function HomePage() {
                   const info = EMOTION_MAP[record.emotion];
                   return (
                     <Link
-                      key={record.id}
-                      href={`/records/${record.id}`}
+                      key={record.documentId}
+                      href={`/records/${record.documentId}`}
                       className="flex items-center gap-2 rounded-full bg-muted px-3 py-2 transition-colors hover:bg-accent"
                     >
                       <EmotionIconStatic emotion={record.emotion} size="sm" className="!w-6 !h-6 !text-sm" />

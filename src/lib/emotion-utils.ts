@@ -106,47 +106,39 @@ export function getTodayRecords(records: EmotionRecord[]): EmotionRecord[] {
  * 📌 주간 통계 계산
  */
 export function getWeeklyStats(records: EmotionRecord[]): WeeklyStats {
-  /*
-  [함수 핵심 정리]
-  이번 주 데이터만 추리고
-  감정별 개수 계산하고
-  비율 구하고
-  가장 많은 감정까지 뽑는 “주간 감정 리포트 핵심 로직”
-  */
-
-  //1️⃣ 이번 주 기간 계산
+  /* 이번 주 기간 계산 (월요일 ~ 다음 주 월요일) */
   const today = new Date();
-  const day = today.getDay();
+  const dayOfWeek = today.getDay() || 7;
 
   const start = new Date(today);
-  start.setDate(today.getDate() - day);
+  start.setDate(today.getDate() - dayOfWeek + 1);
   start.setHours(0, 0, 0, 0);
 
   const end = new Date(start);
-  end.setDate(start.getDate() + 7);
+  end.setDate(end.getDate() + 7);
 
-  //2️⃣ 이번 주 데이터만 필터링
-  const weekRecords = records.filter((r) => {
-    const d = new Date(r.createdAt);
-    return d >= start && d < end;
+  /* 화면 표시용 마지막 날짜 (월~일 표시용) */
+  const displayEndDate = new Date(end);
+  displayEndDate.setDate(displayEndDate.getDate() - 1);
+
+  /* 이번 주 기록만 추출 */
+  const weekRecords = records.filter((record) => {
+    const recordDate = new Date(record.createdAt);
+    return recordDate >= start && recordDate < end;
   });
 
-  //3️⃣ 총 개수
+  /* 총 기록 수 */
   const total = weekRecords.length;
 
-  //4️⃣ 감정별 개수 집계
+  /* 감정별 개수 집계 */
   const emotionCount: Record<string, number> = {};
-  weekRecords.forEach((r) => {
-    emotionCount[r.emotion] = (emotionCount[r.emotion] || 0) + 1;
-  });
-  // 위의 forEach 통해서 아래처럼 예시처럼 결과값이 나옴
-  // emotionCount = {
-  //   happy: 3,
-  //   sad: 2,
-  //   angry: 1
-  // }
 
-  //5️⃣ 퍼센트 계산 + 배열로 변환
+  weekRecords.forEach((record) => {
+    emotionCount[record.emotion] =
+      (emotionCount[record.emotion] || 0) + 1;
+  });
+
+  /* 감정 비율 계산 */
   const emotionDistribution = Object.entries(emotionCount).map(
     ([emotion, count]) => ({
       emotion: emotion as EmotionType,
@@ -154,62 +146,50 @@ export function getWeeklyStats(records: EmotionRecord[]): WeeklyStats {
       percentage: total > 0 ? (count / total) * 100 : 0,
     })
   );
-  // 위의 결과값 예시)
-  // emotionDistribution = [
-  //   { emotion: "happy", count: 3, percentage: 50 },
-  //   { emotion: "sad", count: 2, percentage: 33.3 },
-  // ]
 
-  const dailyAverages: WeeklyStats['dailyAverages'] = []
+  /* 일별 평균 강도 + 대표 감정 */
+  const dailyAverages: WeeklyStats["dailyAverages"] = [];
 
-    for (let i = 0; i < 7; i++) {
-      const day = new Date(start)
-      day.setDate(start.getDate() + i)
-      const stats = getDailyStats(records,day)
-      
-      const dayEmotionCounts = stats.emotions.reduce((acc, e) => {
-        acc[e.emotion] = e.count
-        return acc
-      }, {} as Record<EmotionType, number>)
-      
-      const dominantEmotion = Object.entries(dayEmotionCounts)
-        .sort(([, a], [, b]) => b - a)[0]?.[0] as EmotionType | undefined
-      
-      dailyAverages.push({
-        date: stats.date,
-        averageIntensity: stats.averageIntensity,
-        dominantEmotion: dominantEmotion || null,
-      })
-    }
+  for (let i = 0; i < 7; i++) {
+    const currentDate = new Date(start);
+    currentDate.setDate(start.getDate() + i);
 
+    const stats = getDailyStats(records, currentDate);
 
+    const dayEmotionCounts = stats.emotions.reduce((acc, emotion) => {
+      acc[emotion.emotion] = emotion.count;
+      return acc;
+    }, {} as Record<EmotionType, number>);
 
+    const dominantEmotion = Object.entries(dayEmotionCounts)
+      .sort(([, a], [, b]) => b - a)[0]?.[0] as
+      | EmotionType
+      | undefined;
 
+    dailyAverages.push({
+      date: stats.date,
+      averageIntensity: stats.averageIntensity,
+      dominantEmotion: dominantEmotion ?? null,
+    });
+  }
 
-
-
-  //6️⃣ 가장 많은 감정 찾기
+  /* 이번 주 가장 많이 기록된 감정 */
   const mostFrequentEmotion =
-    emotionDistribution.sort((a, b) => b.count - a.count)[0]?.emotion || null;
+    [...emotionDistribution]
+      .sort((a, b) => b.count - a.count)[0]?.emotion ?? null;
 
   return {
     startDate: start.toISOString(),
     endDate: end.toISOString(),
+
+    // 화면 표시용 (예: 6/15 ~ 6/21)
+    displayEndDate: displayEndDate.toISOString(),
+
     emotionDistribution,
-    dailyAverages: dailyAverages,
+    dailyAverages,
     totalRecords: total,
     mostFrequentEmotion,
   };
-  /*
-  위에 반환 데이터 예시
-  {
-    startDate: "이번주 시작",
-    endDate: "이번주 끝",
-    emotionDistribution: [...],
-    totalRecords: 5,
-    mostFrequentEmotion: "happy"
-  }
-  */
 }
 
 /**

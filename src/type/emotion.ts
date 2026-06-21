@@ -33,6 +33,7 @@ export interface WeeklyStats {
   dailyAverages: { date: string; averageIntensity: number; dominantEmotion: EmotionType | null }[]
   totalRecords: number
   mostFrequentEmotion: EmotionType | null
+  displayEndDate: string
 }
 
 export interface AIInsight {

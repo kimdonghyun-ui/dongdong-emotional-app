@@ -351,7 +351,12 @@ function WeeklyStatsView({ stats }: { stats: WeeklyStats }) {
             이번 주 요약
           </CardTitle>
           <CardDescription>
-            {format(new Date(stats.startDate), 'M월 d일', { locale: ko })} - {format(new Date(stats.endDate), 'M월 d일', { locale: ko })}
+            {/* {format(new Date(stats.startDate), 'M월 d일', { locale: ko })} - {format(new Date(stats.endDate), 'M월 d일', { locale: ko })} */}
+
+            {format(new Date(stats.startDate), "M월 d일", { locale: ko })}
+            -
+            {format(new Date(stats.displayEndDate), "M월 d일", { locale: ko })}
+
           </CardDescription>
         </CardHeader>
         <CardContent>
